@@ -1,6 +1,6 @@
 package demo.invoice.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -21,10 +21,10 @@ import demo.invoice.repository.IssuerConfigRepository;
 import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.InvoiceService;
+import demo.invoice.sri.accessKey.AccessKeyGenerator;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
-import demo.invoice.util.AccessKeyUtil;
 import demo.invoice.util.NumericCodeGeneratorUtil;
 import jakarta.transaction.Transactional;
 
@@ -41,6 +41,7 @@ public class InvoiceServiceImpl implements InvoiceService{
     private final InvoiceFactory invoiceFactory;
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
+    private final AccessKeyGenerator accessKeyGenerator;
 
     InvoiceServiceImpl(Map<String, XmlSigner> xmlSigners, 
                        SriXmlGenerator sriXmlGenerator,
@@ -51,7 +52,8 @@ public class InvoiceServiceImpl implements InvoiceService{
                        InvoiceCalculator invoiceCalculator,
                        InvoiceFactory invoiceFactory,
                        InvoiceRepository invoiceRepository,
-                       InvoiceMapper invoiceMapper){
+                       InvoiceMapper invoiceMapper,
+                       AccessKeyGenerator accessKeyGenerator){
         this.xmlSigners = xmlSigners;
         this.sriXmlGenerator = sriXmlGenerator;
         this.sriInvoiceMapper = sriInvoiceMapper;
@@ -62,6 +64,7 @@ public class InvoiceServiceImpl implements InvoiceService{
         this.invoiceFactory = invoiceFactory;
         this.invoiceRepository = invoiceRepository;
         this.invoiceMapper = invoiceMapper;
+        this.accessKeyGenerator = accessKeyGenerator;
     }
 
     @Transactional
@@ -83,16 +86,16 @@ public class InvoiceServiceImpl implements InvoiceService{
                                                 "01");
         
         // Generate accessKey
-        String accessKey = AccessKeyUtil.generateAccessKey(    
-                    new Date(),                                                                   // Fecha de emisión
-                    "01",                                                        // Tipo comprobante (factura)
-                    issuer.getRuc(),                                                              // RUC del emisor
-                    issuerConfig.getEnvironment(),                                                // Ambiente: 1=pruebas, 2=producción
-                    issuerConfig.getEstablishmentCode() + issuerConfig.getEmissionPointCode(),    // Serie: establecimiento+puntoEmision
-                    nextInvoiceSequential,                                                       // Secuencial
-                    NumericCodeGeneratorUtil.generate(),                                         // Código numérico (aleatorio o incremental)
-                    issuerConfig.getEmissionType()                                               // Tipo de emisión
-                );
+        String accessKey = accessKeyGenerator.generate(
+                                                LocalDateTime.now(),                                                                   // Fecha de emisión
+                                                "01",                                                        // Tipo comprobante (factura)
+                                                issuer.getRuc(),                                                              // RUC del emisor
+                                                issuerConfig.getEnvironment(),                                                // Ambiente: 1=pruebas, 2=producción
+                                                issuerConfig.getEstablishmentCode() + issuerConfig.getEmissionPointCode(),    // Serie: establecimiento+puntoEmision
+                                                nextInvoiceSequential,                                                       // Secuencial
+                                                NumericCodeGeneratorUtil.generate(),                                         // Código numérico (aleatorio o incremental)
+                                                issuerConfig.getEmissionType()    
+                                            );
         
         // Calculate invoice totals
         InvoiceTotals invoiceTotals = invoiceCalculator.calculate(request.getDetails());
