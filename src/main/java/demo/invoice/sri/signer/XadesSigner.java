@@ -1,7 +1,8 @@
 package demo.invoice.sri.signer;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
@@ -12,9 +13,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+
 import xades4j.algorithms.EnvelopedSignatureTransform;
 import xades4j.production.BasicSignatureOptions;
 import xades4j.production.DataObjectReference;
@@ -26,8 +30,8 @@ import xades4j.providers.impl.DirectKeyingDataProvider;
 
 public class XadesSigner {
     
-    public void signXml(String pathXml, String pathFirmado, String pathCertificado, String clave) throws Exception {
-        // Cargar el certificado PKCS12
+    public String signXml(String unsignedXml, String pathCertificado, String clave) throws Exception {
+        // Load sign cetificate PKCS12
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(new FileInputStream(pathCertificado), clave.toCharArray());
 
@@ -48,7 +52,7 @@ public class XadesSigner {
         // Leer documento XML
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
-        Document doc = dbf.newDocumentBuilder().parse(new FileInputStream(pathXml));
+        Document doc = dbf.newDocumentBuilder().parse(new InputSource(new StringReader(unsignedXml)));
 
         // Firmar XML
         DataObjectDesc obj = new DataObjectReference("#" + doc.getDocumentElement().getAttribute("id"))
@@ -62,8 +66,11 @@ public class XadesSigner {
 
         // Guardar resultado
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.transform(new DOMSource(doc), new StreamResult(new FileOutputStream(pathFirmado)));
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
-        System.out.println("✅ XML firmado correctamente en: " + pathFirmado);
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+
+        return writer.toString();
     }
 }

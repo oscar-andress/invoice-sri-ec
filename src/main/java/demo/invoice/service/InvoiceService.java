@@ -1,7 +1,8 @@
 package demo.invoice.service;
 
-import demo.invoice.dto.request.InvoiceRequest;
+import demo.invoice.dto.request.IssueInvoiceRequest;
+import demo.invoice.dto.response.IssueInvoiceResponse;
 
 public interface InvoiceService {
-    String issueInvoice(InvoiceRequest request);
+    IssueInvoiceResponse issueInvoice(IssueInvoiceRequest request);
 }

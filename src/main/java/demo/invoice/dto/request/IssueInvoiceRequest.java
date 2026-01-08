@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class InvoiceRequest {
+public class IssueInvoiceRequest {
     // Buyer information
     private String buyerIdentification;
     private String buyerName;
@@ -21,13 +21,13 @@ public class InvoiceRequest {
     private String buyerAddress; 
 
     // Invoice details
-    private List<InvoiceDetailRequest> details;
+    private List<IssueInvoiceDetailRequest> details;
 
     @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class InvoiceDetailRequest {
+    public static class IssueInvoiceDetailRequest {
         private String description;
         private BigDecimal quantity;
         private BigDecimal unitPrice;
