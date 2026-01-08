@@ -1,10 +1,10 @@
 package demo.invoice.util;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class AccessKeyUtil {
-    public static String generateAccessKey(Date fechaEmision, String tipoComprobante, String ruc,
+    public static String generateAccessKey(LocalDateTime fechaEmision, String tipoComprobante, String ruc,
                                             String ambiente, String serie, String secuencial,
                                             String codigoNumerico, String tipoEmision) {
         // Fecha en formato ddMMyyyy

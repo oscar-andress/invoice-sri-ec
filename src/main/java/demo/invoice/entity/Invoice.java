@@ -30,7 +30,7 @@ public class Invoice {
     @Column(name = "id_invoice")
     private Long idInvoice;
 
-    @Column(name = "access_key", nullable = false, length = 49)
+    @Column(name = "access_key", nullable = false, length = 100)
     private String accessKey;
 
     @Column(name = "sequential", nullable = false, length = 9)

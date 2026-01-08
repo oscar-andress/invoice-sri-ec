@@ -37,6 +37,7 @@ import demo.invoice.repository.IssuerConfigRepository;
 import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.impl.InvoiceServiceImpl;
+import demo.invoice.sri.accessKey.AccessKeyGenerator;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
@@ -77,6 +78,9 @@ public class InvoiceServiceTest {
     @Mock
     private XmlSigner xmlSigner;
 
+    @Mock
+    private AccessKeyGenerator accessKeyGenerator;
+
     @InjectMocks
     private InvoiceServiceImpl invoiceServiceImpl;
 
@@ -103,7 +107,7 @@ public class InvoiceServiceTest {
         issuerConfig = new IssuerConfig();
         issuerConfig.setCreatedAt(LocalDateTime.now());
         issuerConfig.setEmissionPointCode("001");
-        issuerConfig.setEmissionType("01");
+        issuerConfig.setEmissionType("1");
         issuerConfig.setEnvironment("1");
         issuerConfig.setEstablishmentCode("001");
         issuerConfig.setIdIssuer(issuer.getIdIssuer());
@@ -150,21 +154,37 @@ public class InvoiceServiceTest {
         response.setIdInvoice(1l);
 
         // WHEN
-        when(issuerRepository.findByActiveTrue()).thenReturn(issuer);
-        when(issuerConfigRepository.findByIdIssuer(issuer.getIdIssuer())).thenReturn(issuerConfig);
+        when(issuerRepository.findByActiveTrue())
+            .thenReturn(issuer);
+        when(issuerConfigRepository.findByIdIssuer(issuer.getIdIssuer()))
+            .thenReturn(issuerConfig);
         when(invoiceSequentialService
                 .nextInvoiceSequential( 
                     issuer.getRuc(), 
                     issuerConfig.getEstablishmentCode(), 
                     issuerConfig.getEmissionPointCode(),
-                    "01")
-        ).thenReturn("000000001");
-        when(invoiceCalculator.calculate(details)).thenReturn(invoiceTotals);
+                    "01"))
+            .thenReturn("000000001");
+            when(accessKeyGenerator.generate(
+                    any(),
+                    eq("01"),
+                    eq("1001122334"),
+                    eq("1"),
+                    eq("001001"),
+                    eq("000000001"),
+                    anyString(),
+                    eq("1")
+            )).thenReturn("ACCESS_KEY_TEST");
+        when(invoiceCalculator.calculate(details))
+            .thenReturn(invoiceTotals);
         when(sriInvoiceMapper.mapToSriInvoiceMapper(eq(issueInvoiceRequest), any(InvoiceContext.class), eq(invoiceTotals)))
             .thenReturn(sriInvoiceXml);
-        when(sriXmlGenerator.generate(sriInvoiceXml)).thenReturn(unsignedXml);
-        when(xmlSigners.get("XADES")).thenReturn(xmlSigner);
-        when(xmlSigner.sign(unsignedXml)).thenReturn(signedXml);
+        when(sriXmlGenerator.generate(sriInvoiceXml))
+            .thenReturn(unsignedXml);
+        when(xmlSigners.get("XADES"))
+            .thenReturn(xmlSigner);
+        when(xmlSigner.sign(unsignedXml))
+            .thenReturn(signedXml);
         when(invoiceFactory.create(
                 eq(issueInvoiceRequest),
                 any(InvoiceContext.class),
@@ -172,10 +192,12 @@ public class InvoiceServiceTest {
                 eq(signedXml),
                 eq(invoiceTotals),
                 anyString(),              
-                eq("000000001")
-        )).thenReturn(invoice);
-        when(invoiceRepository.save(invoice)).thenReturn(savedInvoice);
-        when(invoiceMapper.toIssueResponse(savedInvoice)).thenReturn(response);
+                eq("000000001")))
+            .thenReturn(invoice);
+        when(invoiceRepository.save(invoice))
+            .thenReturn(savedInvoice);
+        when(invoiceMapper.toIssueResponse(savedInvoice))
+            .thenReturn(response);
 
         // ACT
         IssueInvoiceResponse responseReturned = invoiceServiceImpl.issueInvoice(issueInvoiceRequest);
