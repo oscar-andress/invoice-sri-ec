@@ -12,14 +12,14 @@ public class XadesXmlSigner implements XmlSigner{
     }
 
     @Override
-    public String sign(String xmlPath, String signXmlPath) {
+    public String sign(String unsignedXml) {
         
         try {
-            xadesSigner.signXml(xmlPath, signXmlPath, "src/main/resources/static/signature/yourDigitalSign.p12", "yourSuperSecretPassword");
+            return xadesSigner.signXml(unsignedXml, "src/main/resources/static/signature/yourSign.p12", "yourSuperSecretKey");
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return signXmlPath;
+        return "";
     }
     
 }

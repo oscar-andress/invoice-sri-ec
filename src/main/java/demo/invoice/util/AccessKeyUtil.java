@@ -3,8 +3,8 @@ package demo.invoice.util;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class ClaveAccesoUtil {
-    public static String generarClaveAcceso(Date fechaEmision, String tipoComprobante, String ruc,
+public class AccessKeyUtil {
+    public static String generateAccessKey(Date fechaEmision, String tipoComprobante, String ruc,
                                             String ambiente, String serie, String secuencial,
                                             String codigoNumerico, String tipoEmision) {
         // Fecha en formato ddMMyyyy
@@ -24,11 +24,11 @@ public class ClaveAccesoUtil {
 
         // Calcular dígito verificador (módulo 11)
         String base = sb.toString();
-        int digitoVerificador = calcularDigitoVerificador(base);
+        int digitoVerificador = calculateDigitVerifier(base);
         return base + digitoVerificador;
     }
 
-    private static int calcularDigitoVerificador(String clave) {
+    private static int calculateDigitVerifier(String clave) {
         int[] pesos = {2, 3, 4, 5, 6, 7};
         int suma = 0;
         int pesoIndex = 0;

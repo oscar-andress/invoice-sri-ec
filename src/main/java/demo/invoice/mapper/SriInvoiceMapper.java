@@ -3,16 +3,17 @@ package demo.invoice.mapper;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-import demo.invoice.context.InvoiceContext;
-import demo.invoice.dto.request.InvoiceRequest;
-import demo.invoice.dto.request.InvoiceRequest.InvoiceDetailRequest;
+import demo.invoice.domain.calculator.InvoiceTaxTotal;
+import demo.invoice.domain.calculator.InvoiceTotals;
+import demo.invoice.domain.context.InvoiceContext;
+import demo.invoice.dto.request.IssueInvoiceRequest;
+import demo.invoice.dto.request.IssueInvoiceRequest.IssueInvoiceDetailRequest;
 import demo.invoice.entity.Issuer;
 import demo.invoice.entity.IssuerConfig;
 import demo.invoice.sri.xml.SriDetailInvoiceXml;
@@ -23,21 +24,19 @@ import demo.invoice.sri.xml.SriTaxesXml;
 import demo.invoice.sri.xml.SriTotalTaxXml;
 import demo.invoice.sri.xml.SriTotalWithTaxesXml;
 import demo.invoice.sri.xml.SriTributaryInfoXml;
-import demo.invoice.util.ClaveAccesoUtil;
-import demo.invoice.util.NumericCodeGeneratorUtil;
 
 @Component
 public class SriInvoiceMapper {
 
-    public SriInvoiceXml mapToSriInvoiceMapper(InvoiceRequest request, InvoiceContext context){
+    public SriInvoiceXml mapToSriInvoiceMapper(IssueInvoiceRequest request, InvoiceContext context, InvoiceTotals invoiceTotals){
         SriInvoiceXml sriInvoiceXml = new SriInvoiceXml();
-        sriInvoiceXml.setInfoTributaria(mapTributaryInfoXml(context.getIssuer(), context.getIssuerConfig(), context.getNextInvoiceSequential()));
+        sriInvoiceXml.setInfoTributaria(mapTributaryInfoXml(context.getIssuer(), context.getIssuerConfig(), context.getNextInvoiceSequential(), context.getAccessKey()));
         sriInvoiceXml.setDetalles(mapToDetailInvoiceXml(request.getDetails()));
-        sriInvoiceXml.setInfoFactura(mapToInvoiceInfoXml(request, sriInvoiceXml.getDetalles()));
+        sriInvoiceXml.setInfoFactura(mapToInvoiceInfoXml(request, invoiceTotals));
         return sriInvoiceXml;
     }
     
-    private SriTributaryInfoXml mapTributaryInfoXml(Issuer issuer, IssuerConfig issuerConfig, String nextInvoiceSequential){
+    private SriTributaryInfoXml mapTributaryInfoXml(Issuer issuer, IssuerConfig issuerConfig, String nextInvoiceSequential, String accessKey){
         
         SriTributaryInfoXml infoTributaria = new SriTributaryInfoXml();
         infoTributaria.setAmbiente(issuerConfig.getEnvironment());
@@ -49,24 +48,14 @@ public class SriInvoiceMapper {
         infoTributaria.setPtoEmi(issuerConfig.getEmissionPointCode());
         infoTributaria.setSecuencial(nextInvoiceSequential);
         infoTributaria.setDirMatriz(issuer.getHeadOfficeAddress());
-        infoTributaria.setClaveAcceso(ClaveAccesoUtil.generarClaveAcceso(    
-            new Date(),                             // Fecha de emisión
-            "01",                   // Tipo comprobante (factura)
-            issuer.getRuc(),                        // RUC del emisor
-            issuerConfig.getEnvironment(),                   // Ambiente: 1=pruebas, 2=producción
-            issuerConfig.getEstablishmentCode() + issuerConfig.getEmissionPointCode(),              // Serie: establecimiento+puntoEmision
-            nextInvoiceSequential,           // Secuencial
-            NumericCodeGeneratorUtil.generate(),            // Código numérico (aleatorio o incremental)
-            issuerConfig.getEmissionType()                    // Tipo de emisión
-        )
-       );
+        infoTributaria.setClaveAcceso(accessKey);
        return infoTributaria;
     }
 
-    private List<SriDetailInvoiceXml> mapToDetailInvoiceXml(List<InvoiceDetailRequest> details){
+    private List<SriDetailInvoiceXml> mapToDetailInvoiceXml(List<IssueInvoiceDetailRequest> details){
         List<SriDetailInvoiceXml> detalleFacturas = new ArrayList<>();
 
-        for (InvoiceDetailRequest detail : details) {
+        for (IssueInvoiceDetailRequest detail : details) {
             SriDetailInvoiceXml detalleFactura = new SriDetailInvoiceXml();
             detalleFactura.setCantidad(detail.getQuantity());
             detalleFactura.setPrecioUnitario(detail.getUnitPrice());
@@ -93,7 +82,7 @@ public class SriInvoiceMapper {
         return detalleFacturas;
     }
 
-    private SriInvoiceInfoXml mapToInvoiceInfoXml(InvoiceRequest request, List<SriDetailInvoiceXml> details){
+    private SriInvoiceInfoXml mapToInvoiceInfoXml(IssueInvoiceRequest request, InvoiceTotals invoiceTotals){
         
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         
@@ -104,57 +93,34 @@ public class SriInvoiceMapper {
         infoFactura.setTipoIdentificacionComprador(request.getBuyerIdentificationType());
         infoFactura.setRazonSocialComprador(request.getBuyerName());
         infoFactura.setIdentificacionComprador(request.getBuyerIdentification());
-        infoFactura.setTotalSinImpuestos(
-            details.stream()
-                .map(SriDetailInvoiceXml :: getPrecioTotalSinImpuesto)
-                .reduce(BigDecimal.ZERO, BigDecimal :: add)
-        );
-        infoFactura.setTotalDescuento(
-            details.stream()
-                .map(SriDetailInvoiceXml :: getDescuento)
-                .reduce(BigDecimal.ZERO, BigDecimal :: add)
-        );
+        infoFactura.setTotalSinImpuestos(invoiceTotals.getTotalWithoutTaxes());
+        infoFactura.setTotalDescuento(invoiceTotals.getTotalDiscount());
 
-        Map<String, SriTotalTaxXml> taxMap = new HashMap<>();
+        SriTotalWithTaxesXml sriTotalWithTaxesXml = mapToTotalWithTaxesXml(invoiceTotals.getTaxTotals().values());
 
-        for (SriDetailInvoiceXml detail : details) {
-            for (SriTaxXml tax : detail.getImpuestos().getImpuesto()) {
-
-                String key = tax.getCodigo() + "-" + tax.getCodigoPorcentaje();
-
-                SriTotalTaxXml totalTax = taxMap.computeIfAbsent(key, k -> {
-                    SriTotalTaxXml t = new SriTotalTaxXml();
-                    t.setCodigo(tax.getCodigo());
-                    t.setCodigoPorcentaje(tax.getCodigoPorcentaje());
-                    t.setBaseImponible(BigDecimal.ZERO);
-                    t.setValor(BigDecimal.ZERO);
-                    return t;
-                });
-
-                totalTax.setBaseImponible(
-                    totalTax.getBaseImponible().add(tax.getBaseImponible())
-                );
-                totalTax.setValor(
-                    totalTax.getValor().add(tax.getValor())
-                );
-            }
-        }
-
-        SriTotalWithTaxesXml sriTotalWithTaxesXm = new SriTotalWithTaxesXml();
-        sriTotalWithTaxesXm.getTotalImpuesto().addAll(taxMap.values());
-
-        infoFactura.setTotalConImpuestos(sriTotalWithTaxesXm.getTotalImpuesto());
+        infoFactura.setTotalConImpuestos(sriTotalWithTaxesXml.getTotalImpuesto());
 
         infoFactura.setPropina(BigDecimal.ZERO);
-        infoFactura.setImporteTotal(
-            infoFactura.getTotalSinImpuestos().add(
-                taxMap.values().stream()
-                    .map(SriTotalTaxXml :: getValor)
-                    .reduce(BigDecimal.ZERO, BigDecimal :: add)
-            )
-        );
+        infoFactura.setImporteTotal(invoiceTotals.getGrandTotal());
         infoFactura.setMoneda("DOLAR");
 
         return infoFactura;
+    }
+
+    private SriTotalWithTaxesXml mapToTotalWithTaxesXml(Collection<InvoiceTaxTotal> taxTotals) {
+
+        SriTotalWithTaxesXml sriTaxes = new SriTotalWithTaxesXml();
+
+        for (InvoiceTaxTotal tax : taxTotals) {
+            SriTotalTaxXml sriTax = new SriTotalTaxXml();
+            sriTax.setCodigo(tax.getTaxCode());
+            sriTax.setCodigoPorcentaje(tax.getTaxPercentageCode());
+            sriTax.setBaseImponible(tax.getTaxableBase());
+            sriTax.setValor(tax.getTaxValue());
+
+            sriTaxes.getTotalImpuesto().add(sriTax);
+        }
+
+        return sriTaxes;
     }
 }
