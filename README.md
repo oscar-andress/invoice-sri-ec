@@ -57,3 +57,15 @@ POST /api/v1/invoice/issue
 }
 ```
 ---
+## 🧪 Testing
+
+Includes **unit and integration tests** for:
+
+* Services
+
+---
+
+## 👤 Author
+
+**Oscar Vega**
+Backend Developer – Spring Boot | Microservices 
