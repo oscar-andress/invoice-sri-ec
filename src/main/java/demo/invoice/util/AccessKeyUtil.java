@@ -1,15 +1,15 @@
 package demo.invoice.util;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class AccessKeyUtil {
     public static String generateAccessKey(LocalDateTime fechaEmision, String tipoComprobante, String ruc,
                                             String ambiente, String serie, String secuencial,
                                             String codigoNumerico, String tipoEmision) {
         // Fecha en formato ddMMyyyy
-        SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
-        String fecha = sdf.format(fechaEmision);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        String fecha = fechaEmision.format(formatter);
 
         // Concatenar los campos
         StringBuilder sb = new StringBuilder();
