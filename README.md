@@ -1,4 +1,6 @@
 # invoice-sri-ec
+![CI](https://github.com/oscar-andress/invoice-sri-ec/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/oscar-andress/invoice-sri-ec/actions/workflows/cd.yml/badge.svg)
 ## 📌 Key Features
 
 * Invoice issue
