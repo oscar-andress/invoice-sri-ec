@@ -21,7 +21,7 @@ import demo.invoice.repository.InvoiceSequentialRepository;
 import demo.invoice.service.impl.InvoiceSequentialServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
-public class InvoiceSequentialServiceTest {
+class InvoiceSequentialServiceTest {
     @Mock
     private InvoiceSequentialRepository invoiceSequentialRepository;
     
@@ -53,7 +53,7 @@ public class InvoiceSequentialServiceTest {
         String nextInvoiceSequential = invoiceSequentialServiceImpl.nextInvoiceSequential(ruc, establishment, emissionPoint, documentType);
 
         // THEN
-        assertEquals(nextInvoiceSequential, "000000002");
+        assertEquals("000000002", nextInvoiceSequential);
         verify(invoiceSequentialRepository, times(1)).queryFindNextInvoiceSequential(ruc, documentType, establishment, emissionPoint);
         verify(invoiceSequentialRepository, times(1))
             .save(argThat(seq -> seq.getLastSequential().equals(2)));
@@ -77,7 +77,7 @@ public class InvoiceSequentialServiceTest {
         String nextInvoiceSequential = invoiceSequentialServiceImpl.nextInvoiceSequential(ruc, establishment, emissionPoint, documentType);
 
         // THEN
-        assertEquals(nextInvoiceSequential, "000000001");
+        assertEquals("000000001", nextInvoiceSequential);
         verify(invoiceSequentialRepository, times(1)).queryFindNextInvoiceSequential(ruc, documentType, establishment, emissionPoint);
         verify(invoiceSequentialRepository, times(1))
             .save(argThat(seq -> seq.getLastSequential().equals(1)));

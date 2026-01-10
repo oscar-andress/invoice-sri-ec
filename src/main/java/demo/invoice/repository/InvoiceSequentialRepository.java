@@ -8,13 +8,15 @@ import org.springframework.data.repository.query.Param;
 
 import demo.invoice.entity.InvoiceSequential;
 
-public interface InvoiceSequentialRepository extends JpaRepository<InvoiceSequential, Integer> {
-    @Query(value = "SELECT *\n"+
-                   "FROM tbl_invoice_sequential s\n"+
-                   "WHERE s.ruc = :ruc\n"+
-                   "AND s.document_type = :documentType\n"+
-                   "AND s.establishment_code = :establishmentCode\n"+
-                   "AND s.emission_point_code = :emissionPointCode\n"
+public interface InvoiceSequentialRepository extends JpaRepository<InvoiceSequential, Long> {
+    @Query(value = """ 
+                   SELECT *
+                   FROM tbl_invoice_sequential s
+                   WHERE s.ruc = :ruc
+                   AND s.document_type = :documentType
+                   AND s.establishment_code = :establishmentCode
+                   AND s.emission_point_code = :emissionPointCode 
+                   """
            , nativeQuery = true)
     Optional<InvoiceSequential> queryFindNextInvoiceSequential(@Param("ruc") String ruc,
                                                      @Param("documentType") String documentType,
