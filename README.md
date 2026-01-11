@@ -1,8 +1,8 @@
-# 📑 Invoice-Sri-Ec Service - Invoice Microservice
+# 📑 Invoice-Sri-Ec Microservice
 ![CI](https://github.com/oscar-andress/invoice-sri-ec/actions/workflows/ci.yml/badge.svg)
 ![CD](https://github.com/oscar-andress/invoice-sri-ec/actions/workflows/cd.yml/badge.svg)
 
-Invoice Microservice microservice built with Spring Boot, designed as part of a microservices architecture and ready for CI/CD, Docker, Kubernetes, and GitOps with Argo CD.
+Invoice Microservice microservice built with Spring Boot, designed as part of a microservices architecture and ready for CI/CD.
 
 This service is responsible for issuing invoices in accordance with the rules imposed by SRI-Ecuador.
 
