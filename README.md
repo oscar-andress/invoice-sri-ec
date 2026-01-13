@@ -63,6 +63,37 @@ POST /api/v1/invoice/issue
   "totalAmount": 224
 }
 ```
+
+### 🔸 Invoice Send
+
+```http
+PUT /api/v1/invoice/send
+```
+
+**Request example:**
+
+```json
+[
+    {
+        "idInvoice": 47
+    }
+]
+```
+
+**Response example:**
+
+```json
+[
+  {
+    "idInvoice": 47,
+    "accessKey": "1201202601100484492200110010010000000221950080713",
+    "sequential": "000000022",
+    "status": "RECIBIDA",
+    "issueDate": "2026-01-12",
+    "totalAmount": 224
+  }
+]
+```
 ---
 ## 🧪 Testing
 
