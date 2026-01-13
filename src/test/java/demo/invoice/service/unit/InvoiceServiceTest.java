@@ -3,8 +3,11 @@ package demo.invoice.service.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -26,11 +29,14 @@ import demo.invoice.domain.calculator.InvoiceTotals;
 import demo.invoice.domain.context.InvoiceContext;
 import demo.invoice.domain.factory.InvoiceFactory;
 import demo.invoice.dto.request.IssueInvoiceRequest;
+import demo.invoice.dto.request.SendInvoiceRequest;
 import demo.invoice.dto.request.IssueInvoiceRequest.IssueInvoiceDetailRequest;
 import demo.invoice.dto.response.IssueInvoiceResponse;
+import demo.invoice.dto.response.SendInvoiceResponse;
 import demo.invoice.entity.Invoice;
 import demo.invoice.entity.Issuer;
 import demo.invoice.entity.IssuerConfig;
+import demo.invoice.enumeration.InvoiceStatus;
 import demo.invoice.mapper.InvoiceMapper;
 import demo.invoice.mapper.SriInvoiceMapper;
 import demo.invoice.repository.InvoiceRepository;
@@ -39,6 +45,7 @@ import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.impl.InvoiceServiceImpl;
 import demo.invoice.sri.accesskey.AccessKeyGenerator;
+import demo.invoice.sri.reception.SriInvoiceSender;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
@@ -81,6 +88,9 @@ class InvoiceServiceTest {
 
     @Mock
     private AccessKeyGenerator accessKeyGenerator;
+
+    @Mock
+    private SriInvoiceSender sriInvoiceSender;
 
     @InjectMocks
     private InvoiceServiceImpl invoiceServiceImpl;
@@ -206,5 +216,103 @@ class InvoiceServiceTest {
         // THEN
         assertNotNull(responseReturned);
         assertEquals(response, responseReturned);
+    }
+
+    // SEND INVOCES TESTS
+    @Test
+    void sendInvoices_Sucess(){
+
+        // GIVEN
+        
+        SendInvoiceRequest sendInvoiceRequest = new SendInvoiceRequest();
+        sendInvoiceRequest.setIdInvoice(1l);
+
+        List<SendInvoiceRequest> requests = List.of(sendInvoiceRequest);
+        String expectedStatus = "RECIBIDA";
+
+        SendInvoiceResponse sendInvoiceResponse = new SendInvoiceResponse();
+        sendInvoiceResponse.setIdInvoice(1l);
+        sendInvoiceResponse.setStatus(expectedStatus);
+
+        Invoice invoice = new Invoice();
+        invoice.setAccessKey("null");
+        invoice.setSignedXml("<xml>signedXml</xml>");
+        invoice.setStatus(InvoiceStatus.ISSUED.toString());
+        invoice.setIdInvoice(1l);
+
+
+        // WHEN
+        when(invoiceRepository.queryFindByIdInvoiceInAndStatus(anyList(), eq(InvoiceStatus.ISSUED.toString())))
+            .thenReturn(List.of(invoice));
+
+        when(sriInvoiceSender.send(invoice.getSignedXml()))
+            .thenReturn(expectedStatus);
+
+        when(invoiceMapper.toSendInvoiceResponse(invoice))
+            .thenReturn(sendInvoiceResponse);
+
+        // Act
+        List<SendInvoiceResponse> responses = invoiceServiceImpl.sendInvoices(requests);
+        
+        // THEN
+        assertEquals(expectedStatus, responses.get(0).getStatus());
+        assertEquals(expectedStatus, invoice.getStatus());
+        verify(invoiceRepository, times(1))
+            .saveAll(anyList());
+        verify(invoiceMapper, times(1))
+            .toSendInvoiceResponse(invoice);
+        verify(sriInvoiceSender, times(1))
+            .send(invoice.getSignedXml());
+        verify(invoiceRepository, times(1))
+            .queryFindByIdInvoiceInAndStatus(anyList(), eq(InvoiceStatus.ISSUED.toString()));
+    }
+
+    @Test
+    void sendInvoices_Sucess_ReturnEmtpyList(){
+
+        // GIVEN
+        List<SendInvoiceRequest> requests = new ArrayList<>();
+        SendInvoiceRequest sendInvoiceRequest = new SendInvoiceRequest();
+        sendInvoiceRequest.setIdInvoice(1l);
+        requests.add(sendInvoiceRequest);
+        
+        List<Long> idInvoicesRequest = List.of(1l);
+        String expectedStatus = "RECIBIDA";
+
+        SendInvoiceResponse sendInvoiceResponse = new SendInvoiceResponse();
+        sendInvoiceResponse.setIdInvoice(1l);
+        sendInvoiceResponse.setStatus(expectedStatus);
+
+        Invoice invoice = new Invoice();
+        invoice.setAccessKey("null");
+        invoice.setSignedXml("<xml>signedXml</xml>");
+        invoice.setStatus(InvoiceStatus.ISSUED.toString());
+        invoice.setIdInvoice(1l);
+
+
+        // WHEN
+        when(invoiceRepository.queryFindByIdInvoiceInAndStatus(idInvoicesRequest, InvoiceStatus.ISSUED.toString()))
+            .thenReturn(List.of(invoice));
+
+        when(sriInvoiceSender.send(invoice.getSignedXml()))
+            .thenReturn(expectedStatus);
+
+        when(invoiceMapper.toSendInvoiceResponse(invoice))
+            .thenReturn(sendInvoiceResponse);
+
+        // Act
+        List<SendInvoiceResponse> responses = invoiceServiceImpl.sendInvoices(requests);
+        
+        // THEN
+        assertEquals(expectedStatus, responses.get(0).getStatus());
+        assertEquals(expectedStatus, invoice.getStatus());
+        verify(invoiceRepository, times(1))
+            .saveAll(anyList());
+        verify(invoiceMapper, times(1))
+            .toSendInvoiceResponse(invoice);
+        verify(sriInvoiceSender, times(1))
+            .send(invoice.getSignedXml());
+        verify(invoiceRepository, times(1))
+            .queryFindByIdInvoiceInAndStatus(idInvoicesRequest, InvoiceStatus.ISSUED.toString());
     }
 }
