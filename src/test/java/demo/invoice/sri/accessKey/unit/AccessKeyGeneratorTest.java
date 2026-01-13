@@ -2,25 +2,25 @@ package demo.invoice.sri.accessKey.unit;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
-import demo.invoice.sri.accessKey.AccessKeyGenerator;
-import demo.invoice.sri.accessKey.SriAccessKeyGenerator;
+import demo.invoice.sri.accesskey.AccessKeyGenerator;
+import demo.invoice.sri.accesskey.SriAccessKeyGenerator;
 
 public class AccessKeyGeneratorTest {
     @Test
     void generateAccessKey_Sucess(){
         AccessKeyGenerator accessKeyGenerator = new SriAccessKeyGenerator();
         
-        LocalDateTime issueDate = LocalDateTime.of(2026, 1, 8, 10, 0);
+        LocalDate issueDate = LocalDate.of(2026, 1, 8);
         
         // WHEN
         String accessKey = accessKeyGenerator.generate(
                 issueDate, 
                 "01",
-                "1001122334001",
+                "9999999999999",
                 "1",
                 "001",
                 "001",

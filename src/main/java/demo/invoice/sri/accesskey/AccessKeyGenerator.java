@@ -1,9 +1,9 @@
-package demo.invoice.sri.accessKey;
+package demo.invoice.sri.accesskey;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public interface AccessKeyGenerator {
-    String generate(LocalDateTime issueDate,
+    String generate(LocalDate issueDate,
                            String receipType, 
                            String ruc, 
                            String enviroment, 

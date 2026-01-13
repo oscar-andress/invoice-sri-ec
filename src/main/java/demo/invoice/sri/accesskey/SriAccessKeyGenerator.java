@@ -1,6 +1,6 @@
-package demo.invoice.sri.accessKey;
+package demo.invoice.sri.accesskey;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ import demo.invoice.util.NumericCodeGeneratorUtil;
 public class SriAccessKeyGenerator implements AccessKeyGenerator{
 
     @Override
-    public String generate(LocalDateTime issueDate,
+    public String generate(LocalDate issueDate,
                            String receipType, 
                            String ruc, 
                            String enviroment, 

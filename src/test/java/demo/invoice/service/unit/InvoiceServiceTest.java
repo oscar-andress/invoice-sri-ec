@@ -37,7 +37,7 @@ import demo.invoice.repository.IssuerConfigRepository;
 import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.impl.InvoiceServiceImpl;
-import demo.invoice.sri.accessKey.AccessKeyGenerator;
+import demo.invoice.sri.accesskey.AccessKeyGenerator;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;

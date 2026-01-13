@@ -15,7 +15,7 @@ public class XadesXmlSigner implements XmlSigner{
     public String sign(String unsignedXml) {
         
         try {
-            return xadesSigner.signXml(unsignedXml, "src/main/resources/static/signature/yourSign.p12", "yourSuperSecretKey");
+            return xadesSigner.signXml(unsignedXml, "src/main/resources/static/signature/youSign.p12", "yourSuperSecretKey");
         } catch (Exception e) {
             e.printStackTrace();
         }
