@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,13 +38,13 @@ import demo.invoice.repository.IssuerConfigRepository;
 import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.impl.InvoiceServiceImpl;
-import demo.invoice.sri.accessKey.AccessKeyGenerator;
+import demo.invoice.sri.accesskey.AccessKeyGenerator;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
 
 @ExtendWith(MockitoExtension.class)
-public class InvoiceServiceTest {
+class InvoiceServiceTest {
     
     @Mock
     private  SriXmlGenerator sriXmlGenerator;
@@ -166,13 +167,13 @@ public class InvoiceServiceTest {
                     "01"))
             .thenReturn("000000001");
             when(accessKeyGenerator.generate(
-                    any(),
+                    any(LocalDate.class),
                     eq("01"),
                     eq("1001122334"),
                     eq("1"),
-                    eq("001001"),
+                    eq("001"),
+                    eq("001"),
                     eq("000000001"),
-                    anyString(),
                     eq("1")
             )).thenReturn("ACCESS_KEY_TEST");
         when(invoiceCalculator.calculate(details))

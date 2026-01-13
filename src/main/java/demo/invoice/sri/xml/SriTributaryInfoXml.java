@@ -31,7 +31,7 @@ import lombok.Setter;
     "contribuyenteRimpe"
 })
 public class SriTributaryInfoXml {
-private String ambiente;
+    private String ambiente;
     private String tipoEmision;
     private String razonSocial;
     private String nombreComercial;

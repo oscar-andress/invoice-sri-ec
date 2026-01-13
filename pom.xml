@@ -69,6 +69,26 @@
 			<artifactId>xades4j</artifactId>
 			<version>2.4.0</version>
 		</dependency>
+		 <dependency>
+			<groupId>jakarta.xml.ws</groupId>
+			<artifactId>jakarta.xml.ws-api</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>4.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-frontend-jaxws</artifactId>
+			<version>4.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-transports-http</artifactId>
+			<version>4.0.4</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -106,6 +126,31 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-codegen-plugin</artifactId>
+				<version>4.0.4</version>
+				<executions>
+					<execution>
+					<id>generate-wsdl</id>
+					<phase>generate-sources</phase>
+					<configuration>
+						<wsdlOptions>
+						<wsdlOption>
+							<wsdl>${project.basedir}/src/main/resources/wsdl/RecepcionComprobantesOffline.wsdl</wsdl>
+							<extraargs>
+							<extraarg>-p</extraarg>
+							<extraarg>ec.sri.ws.recepcion</extraarg>
+							</extraargs>
+						</wsdlOption>
+						</wsdlOptions>
+					</configuration>
+					<goals>
+						<goal>wsdl2java</goal>
+					</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

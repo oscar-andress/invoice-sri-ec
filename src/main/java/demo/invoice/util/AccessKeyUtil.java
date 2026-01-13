@@ -1,10 +1,10 @@
 package demo.invoice.util;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class AccessKeyUtil {
-    public static String generateAccessKey(LocalDateTime fechaEmision, String tipoComprobante, String ruc,
+    public static String generateAccessKey(LocalDate fechaEmision, String tipoComprobante, String ruc,
                                             String ambiente, String serie, String secuencial,
                                             String codigoNumerico, String tipoEmision) {
         // Fecha en formato ddMMyyyy
@@ -34,7 +34,7 @@ public class AccessKeyUtil {
         int pesoIndex = 0;
 
         for (int i = clave.length() - 1; i >= 0; i--) {
-            int digit = Character.getNumericValue(clave.charAt(i));
+            int digit = clave.charAt(i) - '0';
             suma += digit * pesos[pesoIndex];
             pesoIndex = (pesoIndex + 1) % pesos.length;
         }

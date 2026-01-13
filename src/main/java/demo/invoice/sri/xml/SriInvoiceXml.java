@@ -21,7 +21,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 
-@XmlRootElement(name = "factura")
+@XmlRootElement(name = "factura"
+)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder = {
     "infoTributaria",

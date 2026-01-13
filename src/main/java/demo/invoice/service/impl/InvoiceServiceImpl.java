@@ -1,6 +1,7 @@
 package demo.invoice.service.impl;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -10,10 +11,13 @@ import demo.invoice.domain.calculator.InvoiceTotals;
 import demo.invoice.domain.context.InvoiceContext;
 import demo.invoice.domain.factory.InvoiceFactory;
 import demo.invoice.dto.request.IssueInvoiceRequest;
+import demo.invoice.dto.request.SendInvoiceRequest;
 import demo.invoice.dto.response.IssueInvoiceResponse;
+import demo.invoice.dto.response.SendInvoiceResponse;
 import demo.invoice.entity.Invoice;
 import demo.invoice.entity.Issuer;
 import demo.invoice.entity.IssuerConfig;
+import demo.invoice.enumeration.InvoiceStatus;
 import demo.invoice.mapper.InvoiceMapper;
 import demo.invoice.mapper.SriInvoiceMapper;
 import demo.invoice.repository.InvoiceRepository;
@@ -21,11 +25,11 @@ import demo.invoice.repository.IssuerConfigRepository;
 import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.InvoiceService;
-import demo.invoice.sri.accessKey.AccessKeyGenerator;
+import demo.invoice.sri.accesskey.AccessKeyGenerator;
+import demo.invoice.sri.reception.SriInvoiceSender;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
-import demo.invoice.util.NumericCodeGeneratorUtil;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -42,6 +46,7 @@ public class InvoiceServiceImpl implements InvoiceService{
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
     private final AccessKeyGenerator accessKeyGenerator;
+    private final SriInvoiceSender sriInvoiceSender;
 
     InvoiceServiceImpl(Map<String, XmlSigner> xmlSigners, 
                        SriXmlGenerator sriXmlGenerator,
@@ -53,7 +58,8 @@ public class InvoiceServiceImpl implements InvoiceService{
                        InvoiceFactory invoiceFactory,
                        InvoiceRepository invoiceRepository,
                        InvoiceMapper invoiceMapper,
-                       AccessKeyGenerator accessKeyGenerator){
+                       AccessKeyGenerator accessKeyGenerator,
+                       SriInvoiceSender sriInvoiceSender){
         this.xmlSigners = xmlSigners;
         this.sriXmlGenerator = sriXmlGenerator;
         this.sriInvoiceMapper = sriInvoiceMapper;
@@ -65,6 +71,7 @@ public class InvoiceServiceImpl implements InvoiceService{
         this.invoiceRepository = invoiceRepository;
         this.invoiceMapper = invoiceMapper;
         this.accessKeyGenerator = accessKeyGenerator;
+        this.sriInvoiceSender = sriInvoiceSender;
     }
 
     @Transactional
@@ -87,13 +94,13 @@ public class InvoiceServiceImpl implements InvoiceService{
         
         // Generate accessKey
         String accessKey = accessKeyGenerator.generate(
-                                                LocalDateTime.now(),                                                                   // Fecha de emisión
+                                                LocalDate.now(),                                                                   // Fecha de emisión
                                                 "01",                                                        // Tipo comprobante (factura)
                                                 issuer.getRuc(),                                                              // RUC del emisor
                                                 issuerConfig.getEnvironment(),                                                // Ambiente: 1=pruebas, 2=producción
-                                                issuerConfig.getEstablishmentCode() + issuerConfig.getEmissionPointCode(),    // Serie: establecimiento+puntoEmision
+                                                issuerConfig.getEstablishmentCode(), 
+                                                issuerConfig.getEmissionPointCode(),    // Serie: establecimiento+puntoEmision
                                                 nextInvoiceSequential,                                                       // Secuencial
-                                                NumericCodeGeneratorUtil.generate(),                                         // Código numérico (aleatorio o incremental)
                                                 issuerConfig.getEmissionType()    
                                             );
         
@@ -121,4 +128,37 @@ public class InvoiceServiceImpl implements InvoiceService{
 
         return invoiceMapper.toIssueResponse(savedInvoice);
     }
+
+    @Override
+    public List<SendInvoiceResponse> sendInvoices(List<SendInvoiceRequest> requests) {
+
+        List<Long> idInvoices = requests
+            .stream()
+            .map(SendInvoiceRequest :: getIdInvoice)
+            .toList();
+
+        // Find invoices
+        List<Invoice> invoices = invoiceRepository
+            .queryFindByIdInvoiceInAndStatus(idInvoices, InvoiceStatus.ISSUED.toString());
+        
+        if(invoices.isEmpty()){
+            return List.of();
+        }
+        
+        // Send to SRI
+        List<SendInvoiceResponse> responses = invoices
+            .stream()
+            .map(invoice -> {
+                String status = sriInvoiceSender.send(invoice.getSignedXml());
+                invoice.setStatus(status);
+                return invoiceMapper.toSendInvoiceResponse(invoice);
+            })
+            .toList();
+        
+        // Save status changes
+        invoiceRepository.saveAll(invoices);
+
+        return responses;
+    }
+
 }

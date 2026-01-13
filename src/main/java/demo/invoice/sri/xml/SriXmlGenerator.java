@@ -15,9 +15,14 @@ public class SriXmlGenerator {
             JAXBContext context = JAXBContext.newInstance(SriInvoiceXml.class);
             Marshaller marshaller = context.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.FALSE);
             
             StringWriter writer = new StringWriter();
             marshaller.marshal(invoice, writer);
+
+            System.out.println("XML generado:");
+            System.out.println(writer.toString().substring(0, Math.min(500, writer.toString().length())));
             return writer.toString();
         } catch (Exception e) {
             e.printStackTrace();
