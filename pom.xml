@@ -144,6 +144,15 @@
 							<extraarg>ec.sri.ws.recepcion</extraarg>
 							</extraargs>
 						</wsdlOption>
+						<wsdlOption>
+							<wsdl>
+								${project.basedir}/src/main/resources/wsdl/AutorizacionComprobantesOffline.xml
+							</wsdl>
+							<extraargs>
+								<extraarg>-p</extraarg>
+								<extraarg>ec.sri.ws.autorizacion</extraarg>
+							</extraargs>
+						</wsdlOption>
 						</wsdlOptions>
 					</configuration>
 					<goals>

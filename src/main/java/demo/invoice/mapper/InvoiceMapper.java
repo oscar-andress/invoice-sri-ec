@@ -2,6 +2,7 @@ package demo.invoice.mapper;
 
 import org.springframework.stereotype.Component;
 
+import demo.invoice.dto.response.InvoiceAuthorizeResponse;
 import demo.invoice.dto.response.IssueInvoiceResponse;
 import demo.invoice.dto.response.SendInvoiceResponse;
 import demo.invoice.entity.Invoice;
@@ -28,6 +29,15 @@ public class InvoiceMapper {
         response.setSequential(entity.getSequential());
         response.setStatus(entity.getStatus());
         response.setTotalAmount(entity.getTotalAmount());
+        return response;
+    }
+
+    public InvoiceAuthorizeResponse toInvoiceAuthorizeResponse(Invoice entity){
+        InvoiceAuthorizeResponse response = new InvoiceAuthorizeResponse();
+        response.setAccessKey(entity.getAccessKey());
+        response.setAuthorizationDate(entity.getAutorizationDate());
+        response.setIdInvoice(entity.getIdInvoice());
+        response.setStatus(entity.getStatus());
         return response;
     }
 }
