@@ -45,7 +45,7 @@ public class XadesSigner {
             
         // Crear perfil de firma XAdES-BES
         XadesBesSigningProfile profile = (XadesBesSigningProfile) new XadesBesSigningProfile(keyingProvider)
-            .withBasicSignatureOptions(new BasicSignatureOptions().checkKeyUsage(false));
+            .withBasicSignatureOptions(new BasicSignatureOptions().checkKeyUsage(true));
         xades4j.production.XadesSigner signer = profile.newSigner();
 
         // Leer documento XML
@@ -61,7 +61,7 @@ public class XadesSigner {
         signer.sign(new SignedDataObjects(obj), doc.getDocumentElement());
 
         // REMOVER atributo Id (¡para que el SRI lo acepte!)
-        doc.getDocumentElement().setIdAttribute("id", false);
+        //  doc.getDocumentElement().setIdAttribute("id", false);
 
         // Guardar resultado
         Transformer transformer = TransformerFactory.newInstance().newTransformer();

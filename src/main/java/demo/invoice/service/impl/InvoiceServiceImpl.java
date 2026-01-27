@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import demo.invoice.domain.calculator.InvoiceCalculator;
 import demo.invoice.domain.calculator.InvoiceTotals;
 import demo.invoice.domain.context.InvoiceContext;
 import demo.invoice.domain.factory.InvoiceFactory;
+import demo.invoice.dto.request.InvoiceAuthorizeRequest;
 import demo.invoice.dto.request.IssueInvoiceRequest;
 import demo.invoice.dto.request.SendInvoiceRequest;
+import demo.invoice.dto.response.InvoiceAuthorizeResponse;
 import demo.invoice.dto.response.IssueInvoiceResponse;
 import demo.invoice.dto.response.SendInvoiceResponse;
 import demo.invoice.entity.Invoice;
@@ -26,11 +29,14 @@ import demo.invoice.repository.IssuerRepository;
 import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.InvoiceService;
 import demo.invoice.sri.accesskey.AccessKeyGenerator;
+import demo.invoice.sri.authorization.SriAuthorizationMapper;
+import demo.invoice.sri.authorization.SriInvoiceAuthorizer;
+import demo.invoice.sri.authorization.dto.SriResponseReceipt;
 import demo.invoice.sri.reception.SriInvoiceSender;
 import demo.invoice.sri.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
-import jakarta.transaction.Transactional;
+import ec.sri.ws.autorizacion.RespuestaComprobante;
 
 @Service
 public class InvoiceServiceImpl implements InvoiceService{
@@ -47,6 +53,8 @@ public class InvoiceServiceImpl implements InvoiceService{
     private final InvoiceMapper invoiceMapper;
     private final AccessKeyGenerator accessKeyGenerator;
     private final SriInvoiceSender sriInvoiceSender;
+    private final SriInvoiceAuthorizer sriInvoiceAuthorizer;
+    private final SriAuthorizationMapper sriAuthorizationMapper;
 
     InvoiceServiceImpl(Map<String, XmlSigner> xmlSigners, 
                        SriXmlGenerator sriXmlGenerator,
@@ -59,7 +67,9 @@ public class InvoiceServiceImpl implements InvoiceService{
                        InvoiceRepository invoiceRepository,
                        InvoiceMapper invoiceMapper,
                        AccessKeyGenerator accessKeyGenerator,
-                       SriInvoiceSender sriInvoiceSender){
+                       SriInvoiceSender sriInvoiceSender,
+                       SriInvoiceAuthorizer sriInvoiceAuthorizer,
+                       SriAuthorizationMapper sriAuthorizationMapper){
         this.xmlSigners = xmlSigners;
         this.sriXmlGenerator = sriXmlGenerator;
         this.sriInvoiceMapper = sriInvoiceMapper;
@@ -72,10 +82,12 @@ public class InvoiceServiceImpl implements InvoiceService{
         this.invoiceMapper = invoiceMapper;
         this.accessKeyGenerator = accessKeyGenerator;
         this.sriInvoiceSender = sriInvoiceSender;
+        this.sriInvoiceAuthorizer = sriInvoiceAuthorizer;
+        this.sriAuthorizationMapper = sriAuthorizationMapper;
     }
 
-    @Transactional
     @Override
+    @Transactional
     public IssueInvoiceResponse issueInvoice(IssueInvoiceRequest request) {
         
         // Find issuer data
@@ -130,6 +142,7 @@ public class InvoiceServiceImpl implements InvoiceService{
     }
 
     @Override
+    @Transactional
     public List<SendInvoiceResponse> sendInvoices(List<SendInvoiceRequest> requests) {
 
         List<Long> idInvoices = requests
@@ -138,12 +151,9 @@ public class InvoiceServiceImpl implements InvoiceService{
             .toList();
 
         // Find invoices
-        List<Invoice> invoices = invoiceRepository
-            .queryFindByIdInvoiceInAndStatus(idInvoices, InvoiceStatus.ISSUED.toString());
+        List<Invoice> invoices = findInvoices(idInvoices, InvoiceStatus.ISSUED.toString());
         
-        if(invoices.isEmpty()){
-            return List.of();
-        }
+        if(invoices.isEmpty()) return List.of();
         
         // Send to SRI
         List<SendInvoiceResponse> responses = invoices
@@ -159,6 +169,41 @@ public class InvoiceServiceImpl implements InvoiceService{
         invoiceRepository.saveAll(invoices);
 
         return responses;
+    }
+
+    @Override
+    @Transactional
+    public List<InvoiceAuthorizeResponse> authorizeInvoices(List<InvoiceAuthorizeRequest> requests) {
+
+        List<Long> idInvoices = requests
+                                    .stream()
+                                    .map(InvoiceAuthorizeRequest :: getIdInvoice)
+                                    .toList();
+
+        List<Invoice> invoices = findInvoices(idInvoices, InvoiceStatus.RECIBIDA.name());
+
+        if(invoices.isEmpty()) return List.of();
+
+        List<InvoiceAuthorizeResponse> responses = invoices
+            .stream()
+            .map(
+                invoice -> {
+                    RespuestaComprobante response = sriInvoiceAuthorizer.authorize(invoice.getAccessKey());
+                    SriResponseReceipt sriResponse = sriAuthorizationMapper.toSriResponseReceipt(response);
+                    invoice.setStatus(sriResponse.getAuthorizations().getAutorizathion().get(0).getStatus());
+                    return invoiceMapper.toInvoiceAuthorizeResponse(invoice);
+                }
+            )
+            .toList();
+
+        invoiceRepository.saveAll(invoices);
+
+        return responses;
+    }
+
+    private List<Invoice> findInvoices(List<Long> idInvoices, String status){
+        return invoiceRepository
+                    .queryFindByIdInvoiceInAndStatus(idInvoices, status);
     }
 
 }
