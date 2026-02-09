@@ -128,7 +128,7 @@ public class InvoiceServiceImpl implements InvoiceService{
         String unsignedXml = sriXmlGenerator.generate(sriInvoiceXml);
 
         // Sign xml
-        String signedXml = xmlSigners.sign(unsignedXml, "src/main/resources/static/signature/firma_1003618228.p12", "AndresOs1996#");
+        String signedXml = xmlSigners.sign(unsignedXml, "src/main/resources/static/signature/yourSign.p12", "yourSuperSecretKey");
 
         // Create invoice
         Invoice invoice = invoiceFactory.create(request, invoiceContext, unsignedXml, signedXml, invoiceTotals, accessKey, nextInvoiceSequential);

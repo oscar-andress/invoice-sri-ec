@@ -192,7 +192,7 @@ class InvoiceServiceTest {
             .thenReturn(sriInvoiceXml);
         when(sriXmlGenerator.generate(sriInvoiceXml))
             .thenReturn(unsignedXml);
-        // when(xmlSigners.sign(unsignedXml, "src/main/resources/static/signature/firma_1003618228.p12", "AndresOs1996#"))
+        // when(xmlSigners.sign(unsignedXml, "src/main/resources/static/signature/yourSign.p12", "yourSuperSecretKey"))
                 // .thenReturn(null);
         when(invoiceFactory.create(
                 eq(issueInvoiceRequest),
