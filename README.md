@@ -94,6 +94,35 @@ PUT /api/v1/invoice/send
   }
 ]
 ```
+
+### 🔸 Invoice authorize
+
+```http
+PUT /api/v1/invoice/authorize
+```
+
+**Request example:**
+
+```json
+[
+    {
+        "idInvoice": 47
+    }
+]
+```
+
+**Response example:**
+
+```json
+[
+  {
+    "idInvoice": 47,
+    "accessKey": "1201202601100484492200110010010000000221950080713",
+    "status": "AUTORIZADA",
+    "authorizationDate": "2026-01-12"
+  }
+]
+```
 ---
 ## 🧪 Testing
 
