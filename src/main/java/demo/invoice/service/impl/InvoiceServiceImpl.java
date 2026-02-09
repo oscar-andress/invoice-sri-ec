@@ -2,7 +2,6 @@ package demo.invoice.service.impl;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +32,7 @@ import demo.invoice.sri.authorization.SriAuthorizationMapper;
 import demo.invoice.sri.authorization.SriInvoiceAuthorizer;
 import demo.invoice.sri.authorization.dto.SriResponseReceipt;
 import demo.invoice.sri.reception.SriInvoiceSender;
-import demo.invoice.sri.signer.XmlSigner;
+import demo.invoice.sri.signing.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
 import ec.sri.ws.autorizacion.RespuestaComprobante;
@@ -43,7 +42,7 @@ public class InvoiceServiceImpl implements InvoiceService{
 
     private final SriXmlGenerator sriXmlGenerator;
     private final SriInvoiceMapper sriInvoiceMapper;
-    private final Map<String, XmlSigner> xmlSigners;
+    private final XmlSigner xmlSigners;
     private final IssuerRepository issuerRepository;
     private final IssuerConfigRepository issuerConfigRepository;
     private final InvoiceSequentialService invoiceSequentialService;
@@ -56,7 +55,7 @@ public class InvoiceServiceImpl implements InvoiceService{
     private final SriInvoiceAuthorizer sriInvoiceAuthorizer;
     private final SriAuthorizationMapper sriAuthorizationMapper;
 
-    InvoiceServiceImpl(Map<String, XmlSigner> xmlSigners, 
+    InvoiceServiceImpl(XmlSigner xmlSigners, 
                        SriXmlGenerator sriXmlGenerator,
                        SriInvoiceMapper sriInvoiceMapper,
                        IssuerRepository issuerRepository,
@@ -88,7 +87,7 @@ public class InvoiceServiceImpl implements InvoiceService{
 
     @Override
     @Transactional
-    public IssueInvoiceResponse issueInvoice(IssueInvoiceRequest request) {
+    public IssueInvoiceResponse issueInvoice(IssueInvoiceRequest request){
         
         // Find issuer data
         Issuer issuer = issuerRepository.findByActiveTrue();
@@ -129,8 +128,7 @@ public class InvoiceServiceImpl implements InvoiceService{
         String unsignedXml = sriXmlGenerator.generate(sriInvoiceXml);
 
         // Sign xml
-        XmlSigner xmlSigner = xmlSigners.get("XADES"); 
-        String signedXml = xmlSigner.sign(unsignedXml);
+        String signedXml = xmlSigners.sign(unsignedXml, "src/main/resources/static/signature/firma_1003618228.p12", "AndresOs1996#");
 
         // Create invoice
         Invoice invoice = invoiceFactory.create(request, invoiceContext, unsignedXml, signedXml, invoiceTotals, accessKey, nextInvoiceSequential);

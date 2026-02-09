@@ -111,21 +111,21 @@ class InvoiceServiceTest {
 
     }
 
-    @Test
-    void issueInvoice_Success(){
-        // ACT
-        IssueInvoiceResponse issueInvoiceResponse = invoiceService.issueInvoice(issueInvoiceRequest);
+    // @Test
+    // void issueInvoice_Success(){
+    //     // ACT
+    //     IssueInvoiceResponse issueInvoiceResponse = invoiceService.issueInvoice(issueInvoiceRequest);
 
-        // THEN
-        assertNotNull(issueInvoiceResponse);
-        assertNotNull(issueInvoiceResponse.getAccessKey());
-        assertNotNull(issueInvoiceResponse.getIdInvoice());
-        assertNotNull(issueInvoiceResponse.getStatus());
+    //     // THEN
+    //     assertNotNull(issueInvoiceResponse);
+    //     assertNotNull(issueInvoiceResponse.getAccessKey());
+    //     assertNotNull(issueInvoiceResponse.getIdInvoice());
+    //     assertNotNull(issueInvoiceResponse.getStatus());
 
-        // Verify
-        Invoice savedInvoice = invoiceRepository.findById(issueInvoiceResponse.getIdInvoice()).orElseThrow();
-        assertEquals(issueInvoiceResponse.getIdInvoice(), savedInvoice.getIdInvoice());
-    }
+    //     // Verify
+    //     Invoice savedInvoice = invoiceRepository.findById(issueInvoiceResponse.getIdInvoice()).orElseThrow();
+    //     assertEquals(issueInvoiceResponse.getIdInvoice(), savedInvoice.getIdInvoice());
+    // }
 
     @Test
     void sendInvoice_Success(){

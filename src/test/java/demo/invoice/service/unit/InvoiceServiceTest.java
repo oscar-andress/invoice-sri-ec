@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,7 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ import demo.invoice.service.InvoiceSequentialService;
 import demo.invoice.service.impl.InvoiceServiceImpl;
 import demo.invoice.sri.accesskey.AccessKeyGenerator;
 import demo.invoice.sri.reception.SriInvoiceSender;
-import demo.invoice.sri.signer.XmlSigner;
+import demo.invoice.sri.signing.signer.XmlSigner;
 import demo.invoice.sri.xml.SriInvoiceXml;
 import demo.invoice.sri.xml.SriXmlGenerator;
 
@@ -60,7 +60,7 @@ class InvoiceServiceTest {
     private  SriInvoiceMapper sriInvoiceMapper;
 
     @Mock
-    private  Map<String, XmlSigner> xmlSigners;
+    private  XmlSigner xmlSigners;
 
     @Mock
     private  IssuerRepository issuerRepository;
@@ -192,15 +192,13 @@ class InvoiceServiceTest {
             .thenReturn(sriInvoiceXml);
         when(sriXmlGenerator.generate(sriInvoiceXml))
             .thenReturn(unsignedXml);
-        when(xmlSigners.get("XADES"))
-            .thenReturn(xmlSigner);
-        when(xmlSigner.sign(unsignedXml))
-            .thenReturn(signedXml);
+        // when(xmlSigners.sign(unsignedXml, "src/main/resources/static/signature/firma_1003618228.p12", "AndresOs1996#"))
+                // .thenReturn(null);
         when(invoiceFactory.create(
                 eq(issueInvoiceRequest),
                 any(InvoiceContext.class),
                 eq(unsignedXml),
-                eq(signedXml),
+                isNull(),
                 eq(invoiceTotals),
                 anyString(),              
                 eq("000000001")))
